@@ -637,9 +637,9 @@ function build_bsp_without_package()
 function build_package()
 {
 	build_rootp &&
-	build_update tgz &&
-	build_update sdcard &&
-	build_update tftp
+	build_update sdcard
+	# build_update tgz &&
+	# build_update tftp
 }
 
 function build_bsp()
@@ -1067,6 +1067,41 @@ EOT
 	popd
 }
 
+function build_rootp_openwrt()
+{
+	echo cleanup previous build...
+	sudo rm -rf $OUTPUT_DIR/rootfs_openwrt
+	rm -f $OUTPUT_DIR/rootfs.tgz
+	mkdir $OUTPUT_DIR/rootfs_openwrt
+
+	echo copy distro rootfs files from openwrt...
+	zcat $OPENWRT_BASE_DIR/rootfs_openwrt.tgz | sudo tar -C $OUTPUT_DIR/rootfs_openwrt -x -f -
+
+	# to make it simple, cust overlay always comes at last
+	if [ "$PRODUCT" != "" ] && [ -d $DISTRO_OVERLAY_DIR/$PRODUCT/rootfs ]; then
+		echo copy product $PRODUCT rootfs overlay files...
+		sudo cp -rf $DISTRO_OVERLAY_DIR/$PRODUCT/rootfs/* $OUTPUT_DIR/rootfs_openwrt
+  fi
+
+	if [ -d $DISTRO_OVERLAY_DIR/$PROJECT_NAME/rootfs ]; then
+		echo copy project rootfs overlay files...
+		sudo cp -rf $DISTRO_OVERLAY_DIR/$PROJECT_NAME/rootfs/etc/fstab.emmc.ro $OUTPUT_DIR/rootfs_openwrt/etc
+	fi
+
+	echo packing rootfs...
+	pushd $OUTPUT_DIR/rootfs_openwrt
+  rm -rf init
+  ln -s sbin/init init
+	sudo tar -czf ../rootfs.tgz *
+  popd
+}
+
+function clean_rootp_openwrt()
+{
+	sudo rm -rf $OUTPUT_DIR/rootfs_openwrt
+	rm -f $OUTPUT_DIR/rootfs.tgz
+}
+
 function build_rootp()
 {
 	echo cleanup previous build...
@@ -1366,6 +1401,7 @@ TOOLS_SRC_DIR=$KERNEL_SRC_DIR/tools/bitmain
 TOOLS_DST_DIR=$OUTPUT_DIR/bsp-tools
 IMAGES_DST_DIR=$OUTPUT_DIR/bsp-images
 ROOTFS_DST_DIR=$OUTPUT_DIR/bsp-rootfs
+OPENWRT_BASE_DIR=$TOP_DIR/bootloader-arm64/distro
 
 # toolchain
 if [ -z $CROSS_COMPILE_64 ]; then
