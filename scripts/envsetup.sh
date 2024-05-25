@@ -1089,6 +1089,7 @@ function build_rootp()
 	if [ -d $DISTRO_OVERLAY_DIR/$PROJECT_NAME/rootfs ]; then
 		echo copy project rootfs overlay files...
 		sudo cp -rf $DISTRO_OVERLAY_DIR/$PROJECT_NAME/rootfs/* $OUTPUT_DIR/rootfs
+    sudo cp $DISTRO_OVERLAY_DIR/$PROJECT_NAME/rootfs/lib/systemd/system/irqbalance.service $OUTPUT_DIR/rootfs/lib/systemd/system
 	fi
 	# debs will be installed later after chroot and then deleted
 	sudo cp -rf $DISTRO_MOD_DIR/debs $OUTPUT_DIR/rootfs
@@ -1110,7 +1111,7 @@ if [  -d /debs ] && [ $(ls /debs/*.deb | wc -l) -gt 0 ]; then
 	do
 		sleep 1
 		dpkg -i -R /debs
-	done
+  done
 fi
 for file in /debs/*
 do
